@@ -1,0 +1,101 @@
+weixinsqlbackup
+第一
+   创建微信商城后台数据库 使用mysql
+create database weixin
+use weixin
+
+第二 
+------------用户管理---------------
+	创建 服务对应的数据表
+	用户表
+	
+	用户登录 先访问这张表 验证 用户名 密码
+	并 根据审核id 去查看是否审核 并根据usetype id 区分用户群
+
+	用户注册 插入到该表 同时将 数据 插入到 用户审核表 审核表只需要 用户的userid
+
+create table usertab (userid int not null , username varchar(64) not null ,paswd varchar(256) not null,shenheid int not null,fphhone varchar(64) not null, usertypeid int not null,primary key (userid),unique(username))
+	
+	注意 用户表字段说明 用户id 使用int 作为主键；用户name 使用varcahr 并且 设置唯一  不允许用户命一样的用户 注册；usertypeid 预留字段 联合usertypetab 表查询用户对应usertype
+	 0 代表普通用户 1 代表vip 2 代表 黑名单
+
+create table usertypetab (usertypeid int not null auto_increment, usertype int not null,userid int not null,primary key (usertypeid))
+
+	usertypetab 后台运维人员将用户对应id 添加到 不同的usertype
+	用户类型页面 从 用户表抓取所有用户中指定 用户名用户 添加到 该表
+
+	用户注册审核表 用户注册信息 提交后需后台人员审核
+
+
+create table usershenhetab (shenheid int not null primary key auto_increment,userid int not null,confirmed int not null,unique (userid))
+
+-----------------------------
+第三
+------------商品管理-----------------
+
+	产品表 后台插入 新产品的产品名
+	并设置产品的上架状态
+create table producttab (productid int(5) not null auto_increment primary key,productname varchar(128) not null,productstate int not null,categoryid int not null,detailsid int not null,imagesid)
+	产品分类表
+
+	产品分类 后台 从产品表所有数据 找到指定产品 添加到指定的分类
+	每次 在这里插入 要把对应的类别id 同步到产品表
+
+create table productcategorytab (categoryid int not null auto_increment primary key ,productid int not null ,categoryname varchar(128) not null,unique (productid))
+	
+	产品详情表 从产品表所有数据 找到对应产品 添加详情
+	details  每次 在这里插入 要把对应的详情id 同步到产品表
+
+create table productdetailstab (detailsid int not null auto_increment primary key,productid int not null,details varchar(256) not null,details1 varchar(256) not null,details2 varchar(256) not null,guige varchar (64) not null,guigetype int not null,guigeprice double not null,unique(productid))
+
+	产品图文表 
+
+	运维上传时就 指明上传图片的宽高
+	每次 在这里插入 要把对应的图片id 同步到产品表
+
+create table productimagetab (imagesid int not null auto_increment primary key,productid int not null,urlnormal varchar(256) not null,urlbig varchar(256) not null,urlsmall varchar(256) not null,width int not null,height int not null,unique(productid))
+
+第四
+
+-----------订单表---------------
+
+	用户提交订单
+
+	 记录用户id 订单内容 生成时间
+
+create table ordertab (orderid varchar(64) not null primary key ,orderprice double not null,userid int not null,ordercontent varchar(256) not null ,ordertime varchar(128 not null),shenheorderid int not null,listtabid int not null)
+
+
+	后台运维 从订单表找到所有数据
+
+	在这里添加 添加后 并把 审核id 同步到订单表
+
+create table ordershenhetab (shenheorderid int not null primary key auto_increment,orderid int not null ,orderstate int not null,unique(orderid))
+
+	审核后 程序或运维将订单 进行拆单
+
+	需要知道拆单总数 orderopsums
+	每一分单的 顺序  orderopnum 
+	每一分单的 内容 listtab-opticontent
+
+create table orderlisttab (listtabid int not null auto_increment primary key,orderid varchar(64) not null,listtab-opticontent varchar(256) not null,orderopnum int not null,orderopsums int not null,listtabstate int not null)
+
+
+第五
+
+----------------------物流订单---------------------
+	
+	拆分后 发货 根据分单表 中 所有分单 添加到已发货物流表
+	 这里发货后 需要 将分单状态 回写listtabstate 到listtab 表
+
+
+create table wuliutab (wuliutabid int not null auto_increment primary key,wuliudetails varchar(256),wuliutime varchar(128),listtabid int not null)
+
+第六 
+
+------------------------银行账号流量表-----------------------
+
+主要记录 每次银行账号交易 单号 金额
+
+create table banktab (bankid int not null primary key auto_increment,bankin double not null ,bankout double not null,bankmesg varchar(256) not null,bankexchangeid varchar(256) not null,exchangetime varchar(128) not null)
+
